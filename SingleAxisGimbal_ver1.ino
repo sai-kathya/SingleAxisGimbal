@@ -3,7 +3,9 @@
 #include <math.h>
 
 Servo myservo;
-float neutral_pos = 110;
+float offset = 0;
+float neutral_pos = 97;
+
 void setup() {
 
  //establish I2C
@@ -16,7 +18,7 @@ void setup() {
 
  //servo setup
  myservo.attach(9);
- myservo.write(neutral_pos);
+ //myservo.write(neutral_pos);
 }
 
 
@@ -27,8 +29,13 @@ void loop() {
  Wire.write(0x3B);
  Wire.endTransmission();
  
- //to read from chose register
+ //to read from chosen register
  Wire.requestFrom(0x68, 6);
+ 
+ if(Serial.available() > 0){
+  offset = Serial.parseFloat();
+ }
+ 
  while(Wire.available() >= 6 ){
    //read and print accelerometer data
    int16_t Xaccel = (Wire.read() << 8) | Wire.read();
@@ -53,9 +60,19 @@ void loop() {
    Serial.println();
 
    //fix tilt
-   float desired_pos = neutral_pos + tilt_angle;
+   float desired_pos = neutral_pos + offset + tilt_angle;
+   if(desired_pos > 170){
+    desired_pos = 170;
+   }
+   if(desired_pos < 5){
+    desired_pos = 5;
+   }
    Serial.println(desired_pos);
    myservo.write(desired_pos);
  }
+ 
  Serial.println();
 }
+
+
+
